@@ -1,0 +1,88 @@
+// Went from this...
+
+function checkAns(ans, qs) {
+	var confirmMessage = "@GETMSG(EXM_ConfirmSubmit)";
+	if (ans < qs) {
+		confirmMessage = "@GETMSG(EXM_DidNotAnswerAll) @GETMSG(EXM_ConfirmSubmit)";
+	}
+	return confirm(confirmMessage);
+}
+
+function tempButtonDisable(elem, disabled_time) {  // There were also issues with this not working well
+	var DEFAULT_DISABLED_TIME = 10; // in seconds
+	var formName = elem.form.name;
+	var buttonName = elem.name;
+	disabled_time = (!disabled_time) ? DEFAULT_DISABLED_TIME : disabled_time;
+	elem.disabled = true;
+	elem.className = 'btnDisabled';
+    setTimeout("document." + formName + "."+buttonName+".disabled = false;"+"document." + formName + "."+buttonName+".className='btn';", disabled_time * 1000);
+    return true;
+}
+
+
+// to this... (due to issues with standard confirm dialog not appearing in all devices, nor responsive)
+
+function checkAns(ans, qs, button, url) {
+	// Get the correct message to use in confirm dialog
+	var confirmMessage =  (ans < qs) ? "@GETMSG(EXM_DidNotAnswerAll) @GETMSG(EXM_ConfirmSubmit)" : "@GETMSG(EXM_ConfirmSubmit)";
+	var whichButton = button;
+
+	// confirm dialog function with deferred.promise returned to process remaining functions
+	var jqConfirm = function(msg) {
+	  var defer = $.Deferred();
+	  var confirmWindow = $('<div id="uiDialog"></div>')
+	  	.appendTo('body')
+	  	.html('<p>'+msg+'</p>')
+	  	.dialog({
+	  		modal: true,
+	        resizable: false,
+	        width: "auto",
+	        height: "auto",
+	        buttons: {
+	          "OK": function() {
+	            $( this ).dialog('close'); 
+	            defer.resolve(true);
+	          },
+	          Cancel: function() {
+	            $( this ).dialog( "close" );
+	            defer.reject(false);
+	          }
+	        }
+	    });
+
+	    // Styling adjustments made to currently applied theme of dialog
+	     $('.ui-widget.ui-dialog').css('margin', '8px');
+	     $('.ui-dialog-titlebar').hide();
+	     $('.ui-dialog .ui-dialog-buttonpane').css({'color': '##000', 'font-weight': '600'}); 
+	     $('.ui-dialog .ui-dialog-buttonpane button').css({'border-radius': '6px', 'width': '70px'});
+
+	    return defer.promise();  
+	}
+	
+	// Call the dialog function and ONLY run other functions if promise is resolved
+	// by clicking the "OK"
+	jqConfirm(confirmMessage).done(function(){
+		tempButtonDisable(whichButton)
+	}).then(function(){
+		goToUrl(url);
+	});
+}
+
+
+function tempButtonDisable(elem, disabled_time) {
+	var DEFAULT_DISABLED_TIME = 10; // in seconds
+	disabled_time = (!disabled_time) ? DEFAULT_DISABLED_TIME : disabled_time;
+	var buttonName = elem.name;
+	elem.disabled = true;
+	elem.className = 'btnDisabled btn btn-default';
+
+    // Delay button response so user can't click button twice
+	setTimeout(function(){
+		var theBtn = document.querySelector('[name='+buttonName+']');
+		// Reset button to not disabled
+		theBtn.disabled = false; 
+		// Replace class names of button to not reflect disabled
+		theBtn.className = 'btn btn-default';  
+	}, disabled_time * 1000);
+    return true;
+}

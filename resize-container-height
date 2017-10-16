@@ -1,0 +1,36 @@
+// Implementation of resizing height of div based on window height
+// (for determination of mobile device being portrait or landscape oriented)
+
+function jsUpdateSize(){
+	// Get the dimensions of the viewport; resizes height
+	    var width = window.innerWidth ||
+	                document.documentElement.clientWidth ||
+	                document.body.clientWidth;
+	    var height = window.innerHeight ||
+	                 document.documentElement.clientHeight ||
+	                 document.body.clientHeight;
+
+	    //console.log(width);  
+	    //console.log(height);
+	    var newHeight = height - 178;
+	    document.getElementById('mainInnerWrapper').height = newHeight;
+	};
+	window.onload = jsUpdateSize;       // When the page first loads
+	window.onresize = jsUpdateSize;     // When the browser changes size
+	
+
+// Implementation of resizing height of again, but allowing for responsive display of content
+
+// Resizes the timer frame height dependent on how much space is needed to display content
+ function jsUpdateHeight(){
+	// Get timer frame instance and determine height it needs
+	    var theTimerFrame = this.document;   
+	    var timerHeight = theTimerFrame.body.scrollHeight;
+	    // Get outermost frame to change rows based on height needed
+	    var rowsToChange = parent.document.getElementById('timerFrameset');
+	    var rowHeightNeeded = "*, " + timerHeight + "px";
+	    rowsToChange.rows = rowHeightNeeded;
+
+	};
+	window.onload = jsUpdateHeight;       // When the page first loads
+	window.onresize = jsUpdateHeight;     // When the browser changes size

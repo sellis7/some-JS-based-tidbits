@@ -1,0 +1,86 @@
+// Reworked JS functions so keyboard accessible, iframe-based widget would work seamlessly with current code/validations
+// (probably should have reworked redundant, original code - oversight and "pick your battles")
+
+function SearchDates(accessibleCheck, innerDoc){  //accessibleCheck, innerDoc
+			if (accessibleCheck == 1) { // If values coming from iframe filters
+			  var start_date = innerDoc.getElementById('txtStartDate');
+			  var end_date = innerDoc.getElementById('txtEndDate');
+			  var orderBy = innerDoc.getElementById('orderBy');
+			} else {
+			  var start_date = document.getElementById('txtStartDate');
+			  var end_date = document.getElementById('txtEndDate');
+			  var orderBy = document.getElementById('orderBy');
+			}
+			window.location.href='../pagebuilder/showpage.cfm?pagedef=<CFOUTPUT>#url.pagedef#</cfoutput>&<CFOUTPUT>#URLTOKEN#</CFOUTPUT><CFIF isDefined("url.show_inactive")>&show_inactive=<CFOUTPUT>#url.show_inactive#</CFOUTPUT></CFIF><CFIF isDefined("url.enr")>&enr=<CFOUTPUT>#url.enr#</CFOUTPUT></CFIF>&txtstartdate='+start_date.value+'&txtenddate='+end_date.value+'&orderBy='+orderBy[orderBy.selectedIndex].value;
+		}
+
+	function checkForm(){
+	  // Check for keyboard accessible iframe to modify filter targets
+	  var accessibleCheck = window.frames[0].window.kbAccessibleFilters;
+	
+	  // Getting document access of iframe
+	  var innerDoc = document.getElementById('filterParameters').contentDocument || document.getElementById('filterParameters').contentWindow.document;
+
+	  var tempChecked = true;
+
+	  if (tempChecked)
+	  { 
+	  	if (accessibleCheck == 1){
+	  		tempChecked = isDate(innerDoc.getElementById('txtStartDate').value)
+			if (!tempChecked) alert("Your Start Date is invalid.");
+		} else {
+			tempChecked = isDate(document.form1.txtStartDate.value)
+			if (!tempChecked) alert("Your Start Date is invalid.");
+		}
+	  }
+
+	  if (tempChecked)
+	  {
+	  	if (accessibleCheck == 1) {
+	  		tempChecked = isDate(innerDoc.getElementById('txtEndDate').value)
+			if (!tempChecked) alert("Your End Date is invalid.");
+	  	} else {
+			tempChecked = isDate(document.form1.txtEndDate.value)
+			if (!tempChecked) alert("Your End Date is invalid.");
+		}
+	  }
+
+	  checked = tempChecked;
+
+	  if (checked==true)
+	  	// Passing iframe values to use
+		 SearchDates(accessibleCheck, innerDoc); //accessibleCheck, innerDoc
+	}
+
+
+	
+// Original JS functions
+
+function SearchDates(){
+			var start_date = document.getElementById('txtStartDate');
+			var end_date = document.getElementById('txtEndDate');
+			var orderBy = document.getElementById('orderBy');
+			window.location.href='../pagebuilder/showpage.cfm?pagedef=<CFOUTPUT>#url.pagedef#</cfoutput>&<CFOUTPUT>#URLTOKEN#</CFOUTPUT><CFIF isDefined("url.show_inactive")>&show_inactive=<CFOUTPUT>#url.show_inactive#</CFOUTPUT></CFIF><CFIF isDefined("url.enr")>&enr=<CFOUTPUT>#url.enr#</CFOUTPUT></CFIF>&txtstartdate='+start_date.value+'&txtenddate='+end_date.value+'&orderBy='+orderBy[orderBy.selectedIndex].value;
+		}
+
+	function checkForm(){
+	  var tempChecked = true;
+
+	  if (tempChecked)
+	  {
+		tempChecked = isDate(document.form1.txtStartDate.value)
+		if (!tempChecked) alert("Your Start Date is invalid.");
+	  }
+
+	  if (tempChecked)
+	  {
+		tempChecked = isDate(document.form1.txtEndDate.value)
+		if (!tempChecked) alert("Your End Date is invalid.");
+	  }
+
+	  checked = tempChecked;
+
+	  if (checked==true)
+		 SearchDates();
+
+	}

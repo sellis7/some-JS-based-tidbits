@@ -1,0 +1,238 @@
+<!--- convert the CF date format string to this popup calendar date format (cf date format is not case sensitive) --->
+<cfset popup_calendar_date_format = client.date_format />
+<cfset popup_calendar_date_format = replace(popup_calendar_date_format,"m","M","all")/> <!--- month indicators need to be upper case --->
+<cfset popup_calendar_date_format = replace(popup_calendar_date_format,"D","d","all")/> <!--- day indicators need to be lower case --->
+<cfset popup_calendar_date_format = replace(popup_calendar_date_format,"Y","y","all")/> <!--- year indicators need to be lower case --->
+
+<div id="transcriptFilters">
+	<p class="level3-head">@GETMSG(APP_FLT_INFO)</p>
+	
+<FORM action="" name="form1" id="form1" method="post" class="form-inline">
+<!---<Z:Fieldset title="@GETMSG(APP_FLT_INFO)">--->
+<cfif NOT ISDEFINED("url.printit")>
+	
+	<cfif NOT isDefined("CNST_Transcript_ShowFilterHeader") OR CNST_Transcript_ShowFilterHeader EQ true>
+
+
+		<cfif IsDefined("S_PROG_LISTINTRO") and "@GETMSG(S_PROG_LISTINTRO)" NEQ "">
+			<b>@GETMSG(S_PROG_LISTINTRO)</b>
+		</cfif>
+
+		<cfset params = URLTOKEN>
+		<CFIF isDefined("url.enr")>
+			<cfset params = params & "&enr=#url.enr#">
+		</CFIF>
+		<CFIF isDefineD("url.txtStartDate")>
+			<cfset params = params & "&txtStartDate=#url.txtStartdate#">
+		</CFIF>
+		<CFIF isDefined("url.txtEndDate")>
+			<cfset params = params & "&txtEndDate=#url.txtEnddate#">
+		</CFIF>
+		<CFIF isDefined("form.show_inactive") and form.show_inactive EQ 1>
+			<cfset params = params & "&show_inactive=1">
+		<cfelse>
+			<cfset params = params & "&show_inactive=0">
+		</cfif>
+		
+		<CFIF isDefined("url.txtstartdate")>
+			<CFIF ((len(url.txtstartdate) GT 0 and not len(url.txtenddate) GT 0) or (len(url.txtenddate) GT 0 and not len(url.txtstartdate) GT 0))>
+				<font class="mainalt">@GETMSG(APP_date_msg)<br></font>
+			</CFIF>
+		</CFIF>
+		 
+		<cfset txtStartDate = DateFormat(Now(),client.date_format)>
+		<cfset txtEndDate = DateFormat(Now(),client.date_format)>
+
+		<style>
+			/* iframe styling for keyboard accessible filter widgets */
+			#filterParameters {margin-top: 40px; width: 100%; border: 0;}	
+		</style>
+		
+		<!--- Massively reworked entire file for more succinct code and to comply with keyboard-accessible JS file via iframe
+		(original code remains, but commented out below) --->	
+		<cfoutput>
+			<iframe id="filterParameters" src="../widgets/kb_accessible_filter_infoR.cfm?#URLTOKEN#" title="transcript filters" scrolling="no">
+				<p>Your browser does not support iframes.</p>
+			</iframe>
+
+			<!--- <div class="form-group">
+				<Z:Date id="courseDateRange"  title="Date Range" helpText="@GETMSG(CRS_show_ending_between) these dates" class="">
+						<Date id="txtStartDate" aria-label="Start Date" class="form-control" title=" "  value="<CFIF isDefined("url.txtStartDate") and #len(url.txtStartDate)# GT 0>#url.txtStartDate#</cfif>"></Date>
+						<Date id="txtEndDate" aria-label="End Date" class="form-control" title=" " value="<CFIF isDefined("url.txtEndDate") and #len(url.txtEndDate)# GT 0>#url.txtEndDate#</CFIF>"></Date>
+					</Z:Date>
+
+			</div> --->
+		</cfoutput>
+
+		<script>
+			//Registers a click to close calendar outside of iframe
+			$(document).on('click', function () {
+				var myFrame = $('#filterParameters');
+				var theCal = myFrame.contents().find('#ui-datepicker-div').css('display');
+				var closeCal = myFrame.contents().find('#ui-datepicker-div .ui-datepicker-close');
+				if (theCal == 'block') {
+					closeCal.click();
+				}
+	      	});
+
+	      	if (matchMedia) {
+ 				var mq = window.matchMedia("(max-width: 461px)");
+				mq.addListener(WidthChange);
+				WidthChange(mq);
+ 			}
+
+ 			function WidthChange(mq) {
+ 			  var theFrame =  document.getElementById('filterParameters');
+			  if (mq.matches) {
+	  			$(theFrame).height(260);
+			  } else {
+			    $(theFrame).height(168);
+			  }
+			}
+ 		</script>
+
+
+ 		<cfoutput>
+ 			<cfparam name="orderBy" default="">
+ 			<script>
+ 				// Provides date values to iframe if defined here
+ 				var startDateVal = "";
+ 				var endDateVal = "";
+ 				<CFIF isDefined("url.txtStartDate") and #len(url.txtStartDate)# GT 0>
+ 					var startDateVal = "#url.txtStartDate#";
+ 				</cfif>
+ 				<CFIF isDefined("url.txtEndDate") and #len(url.txtEndDate)# GT 0>
+ 					var endDateVal = "#url.txtEndDate#";
+ 				</CFIF>
+
+ 				// Establish helpText message variable for iframe date filter
+ 				var helpText="@GETMSG(CRS_show_ending_between) these dates";
+
+ 				//Recreates dropdown to iframe (kb_accessible_filter_infoR.cfm), for form consistency
+ 				var filterDropOptions =  new Object();
+ 				var selectedOption = "";
+ 				<cfif listContainsNoCase(trans_columns_to_display, "course_status")>
+	 				filterDropOptions["@GETMSG(APP_Status) @GETMSG(APP_ASC)"] = "course_status_message_id, is_done, complete";
+	 				<cfif orderBy CONTAINS "course_status_message_id,">selectedOption = "@GETMSG(APP_Status) @GETMSG(APP_ASC)";</cfif>
+	 				filterDropOptions["@GETMSG(APP_Status) @GETMSG(APP_DESC)"] = "course_status_message_id desc, is_done desc, complete desc";
+	 				<cfif orderBy CONTAINS "course_status_message_id desc,">selectedOption = "@GETMSG(APP_Status) @GETMSG(APP_DESC)";</cfif>
+ 				</cfif>
+ 				<cfif listContainsNoCase(trans_columns_to_display, "course_id")>
+ 					filterDropOptions["@GETMSG(S_PROF_ID) @GETMSG(APP_ASC)"] = "c.course_id";
+ 					<cfif orderBy EQ "c.course_id">selectedOption = "@GETMSG(S_PROF_ID) @GETMSG(APP_ASC)";</cfif>
+ 					filterDropOptions["@GETMSG(S_PROF_ID) @GETMSG(APP_DESC)"] = "c.course_id desc";
+ 					<cfif orderBy EQ "c.course_id desc">selectedOption = "@GETMSG(S_PROF_ID) @GETMSG(APP_DESC)";</cfif>
+ 				</cfif>
+ 				<cfif listContainsNoCase(trans_columns_to_display, "course_name")>
+ 					filterDropOptions["@GETMSG(DATA_Course_Name) @GETMSG(APP_ASC)"] = "c.course_name";
+ 					<cfif orderBy EQ "c.course_name">selectedOption = "@GETMSG(DATA_Course_Name) @GETMSG(APP_ASC)";</cfif>
+ 					filterDropOptions["@GETMSG(DATA_Course_Name) @GETMSG(APP_DESC)"] = "c.course_name desc";
+ 					<cfif orderBy EQ "c.course_name desc">selectedOption = "@GETMSG(DATA_Course_Name) @GETMSG(APP_DESC)";</cfif>
+ 				</cfif>
+ 				<cfif listContainsNoCase(trans_columns_to_display, "reg_date")>
+ 					filterDropOptions["@GETMSG(DATA_REG_DATE) @GETMSG(APP_ASC)"] = "sturegv.reg_date";
+ 					<cfif orderBy EQ "sturegv.reg_date">selectedOption = "@GETMSG(DATA_REG_DATE) @GETMSG(APP_ASC)";</cfif>
+ 					filterDropOptions["@GETMSG(DATA_REG_DATE) @GETMSG(APP_DESC)"] = "sturegv.reg_date desc";
+ 					<cfif orderBy EQ "sturegv.reg_date desc">selectedOption = "@GETMSG(DATA_REG_DATE) @GETMSG(APP_DESC)";</cfif>
+ 				</cfif>
+ 				<cfif listContainsNoCase(trans_columns_to_display, "end_date")>
+ 					filterDropOptions["@GETMSG(APP_EndDate) @GETMSG(APP_ASC)"] = "sturegv.end_date";
+ 					<cfif orderBy EQ "sturegv.end_date">selectedOption = "@GETMSG(APP_EndDate) @GETMSG(APP_ASC)";</cfif>
+ 					filterDropOptions["@GETMSG(APP_EndDate) @GETMSG(APP_DESC)"] = "sturegv.end_date desc";
+ 					<cfif orderBy EQ "sturegv.end_date desc">selectedOption = "@GETMSG(APP_EndDate) @GETMSG(APP_DESC)";</cfif>
+ 				</cfif>
+
+ 				var helpTextMsg ="@GETMSG(CRS_show_ending_between) these dates";
+ 				var sortByMsg = "@GETMSG(APP_SORT_BY)";
+ 				var btnRefreshMsg = "@GETMSG(BTN_refresh)";
+
+ 			</script>
+ 		</cfoutput>
+		
+		
+		<!--- <div class="form-group">
+			<cfparam name="orderBy" default="">
+			<Z:DropDown id="orderBy" title="@GETMSG(APP_SORT_BY)"  class="form-control" >
+				<cfif listContainsNoCase(trans_columns_to_display, "course_status")>
+					<DropDownOption value="course_status_message_id, is_done, complete" title="@GETMSG(APP_Status) @GETMSG(APP_ASC)" <cfif orderBy CONTAINS "course_status_message_id,">selected</cfif>></DropDownOption>
+					<DropDownOption value="course_status_message_id desc, is_done desc, complete desc" title="@GETMSG(APP_Status) @GETMSG(APP_DESC)" <cfif orderBy CONTAINS "course_status_message_id desc,">selected</cfif>></DropDownOption>
+				</cfif>
+				<cfif listContainsNoCase(trans_columns_to_display, "course_id")>
+					<DropDownOption value="c.course_id" title="@GETMSG(S_PROF_ID) @GETMSG(APP_ASC)" <cfif orderBy EQ "c.course_id">selected</cfif>></DropDownOption>
+					<DropDownOption value="c.course_id desc" title="@GETMSG(S_PROF_ID) @GETMSG(APP_DESC)" <cfif orderBy EQ "c.course_id desc">selected</cfif>></DropDownOption>
+				</cfif>
+				<cfif listContainsNoCase(trans_columns_to_display, "course_name")>
+					<DropDownOption value="c.course_name" title="@GETMSG(DATA_Course_Name) @GETMSG(APP_ASC)" <cfif orderBy EQ "c.course_name">selected</cfif>></DropDownOption>
+					<DropDownOption value="c.course_name desc" title="@GETMSG(DATA_Course_Name) @GETMSG(APP_DESC)" <cfif orderBy EQ "c.course_name desc">selected</cfif>></DropDownOption>
+				</cfif>
+				<cfif listContainsNoCase(trans_columns_to_display, "reg_date")>
+					<DropDownOption value="sturegv.reg_date" title="@GETMSG(DATA_REG_DATE) @GETMSG(APP_ASC)" <cfif orderBy EQ "sturegv.reg_date">selected</cfif>></DropDownOption>
+					<DropDownOption value="sturegv.reg_date desc" title="@GETMSG(DATA_REG_DATE) @GETMSG(APP_DESC)" <cfif orderBy EQ "sturegv.reg_date desc">selected</cfif>></DropDownOption>
+				</cfif>
+				<cfif listContainsNoCase(trans_columns_to_display, "end_date")>
+					<DropDownOption value="sturegv.end_date" title="@GETMSG(APP_EndDate) @GETMSG(APP_ASC)" <cfif orderBy EQ "sturegv.end_date">selected</cfif>></DropDownOption>
+					<DropDownOption value="sturegv.end_date desc" title="@GETMSG(APP_EndDate) @GETMSG(APP_DESC)" <cfif orderBy EQ "sturegv.end_date desc">selected</cfif>></DropDownOption>
+				</cfif>
+			</Z:DropDown>
+		</div> --->
+		<!--- <div class="form-group">
+			<button type="button" id="transcripFilterBtn" class="btn btn-warning" onclick="checkForm()">
+				<span class="glyphicon glyphicon-refresh" aria-hidden="true"></span> @GETMSG(BTN_refresh)
+			</button>
+		</div> --->
+	</cfif>
+
+</form>
+	
+<cfelse>
+
+	<!--- Get Student info --->
+	<CFQUERY name="nfoC" datasource="#db.connect#">
+		select *
+		from webFindV
+		where key_contact = #Client.contact_key#;
+	</CFQUERY>
+
+	<table class="map">
+		<tr>
+			<td>
+				<div class="contentAreaTitle">@GETMSG(APP_student_record)</div>
+			</td>
+		</tr>
+		<TR>
+			<TD><FONT class="mainalt">&nbsp;<CFOUTPUT query="nfoC">Contact:</FONT>&nbsp;#nfoC.first_name#<CFIF Len(#Trim(nfoC.middle_name)#) GT 0>&nbsp;#UCase(Mid(nfoC.middle_name,1,1))#</CFIF>&nbsp;#nfoC.last_name#
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				<FONT class="mainalt">&nbsp;Stu. Key:</FONT>&nbsp;#nfoC.key_student#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				<FONT class="mainalt">&nbsp;Username:</FONT>&nbsp;#nfoC.ttid#</CFOUTPUT>&nbsp;&nbsp;&nbsp;
+			</TD>
+		</TR>
+	</table>
+
+	<CFQUERY name="enr" datasource="#db.connect#" timeout=#db.timeout#>
+		select distinct key_enrollment, key_prog, rtrim(program_type.program) as program, rtrim(ISNULL(revision,' ')) as revision, rtrim(description) as description, enroll_date
+		from stu_enrollment, program_type, student
+		where stu_enrollment.fkey_prog = key_prog
+			and stu_enrollment.fkey_student = key_student
+			and fkey_contact = #Client.contact_key#
+			and key_enrollment = #this_enr#
+		<CFIF isDefined("form.show_inactive") and #form.show_inactive# EQ 1>
+		<CFELSE>
+			and program_type.active = 1
+		</CFIF>
+		<CFIF isDefined("invitation_only_program")>and program <> '#invitation_only_program#'</CFIF>
+		order by program
+	</CFQUERY>
+
+	<cfif enr.recordcount GT 0>
+		<CFIF Len(enr.revision) GT 0>
+			<CFSET PROG_NAME = enr.program & ", @GETMSG(APP_RevisionAbbrev)" & enr.revision>
+		<CFELSE>
+			<CFSET PROG_NAME = enr.program>
+		</CFIF>
+		<CFSET THIS_PROG = #enr.key_prog#>
+	<cfelse>
+		<CFSET THIS_PROG = "">
+	</cfif>
+
+</cfif>
+</div>
